@@ -15,8 +15,8 @@
 #include "lvgl/lvgl.h"
 #include "lv_symbol_extra_def.h"
 #include "bsp_btn.h"
-#include "app_wifi.h"
-#include "app_rmaker.h"
+// #include "app_wifi.h"
+// #include "app_rmaker.h"
 #include "settings.h"
 #include "ui_main.h"
 #include "ui_sr.h"
@@ -155,8 +155,8 @@ static void ui_status_bar_set_visible(bool visible)
 {
     if (visible) {
         // update all state
-        ui_main_status_bar_set_wifi(app_wifi_is_connected());
-        ui_main_status_bar_set_cloud(app_rmaker_is_connected());
+        // ui_main_status_bar_set_wifi(app_wifi_is_connected());
+        // ui_main_status_bar_set_cloud(app_rmaker_is_connected());
         lv_obj_clear_flag(g_status_bar, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_flag(g_status_bar, LV_OBJ_FLAG_HIDDEN);

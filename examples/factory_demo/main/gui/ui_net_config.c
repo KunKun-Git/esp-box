@@ -8,8 +8,8 @@
 #include "esp_log.h"
 #include "bsp_board.h"
 #include "lvgl/lvgl.h"
-#include "app_wifi.h"
-#include "app_rmaker.h"
+// #include "app_wifi.h"
+// #include "app_rmaker.h"
 #include "ui_main.h"
 #include "ui_net_config.h"
 
@@ -21,6 +21,7 @@ static lv_obj_t *g_qr = NULL;
 static lv_obj_t *g_img = NULL;
 static lv_obj_t *g_page = NULL;
 static ui_net_state_t g_net_state = UI_NET_EVT_LOARDING;
+static ui_net_data_t *g_net_data = NULL;
 
 static void (*g_net_config_end_cb)(void) = NULL;
 
@@ -113,18 +114,39 @@ static void ui_net_config_page_return_click_cb(lv_event_t *e)
     }
 }
 
-void ui_net_config_update_cb(ui_net_state_t state, void *args)
+void ui_net_config_update_cb(ui_net_state_t state, ui_net_data_t *data, void *args)
 {
     g_net_state = state;
+    g_net_data = data;
+    
     if (!g_page) {
         return;
     }
+    if (!data) {
+        return;
+    }
+
     ui_acquire();
     switch (state) {
     case UI_NET_EVT_LOARDING:
-        lv_obj_clear_flag(g_hint_lab, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(g_hint_lab, "System is loading ...");
-        lv_obj_align(g_hint_lab, LV_ALIGN_CENTER, 0, 0);
+        // lv_obj_clear_flag(g_hint_lab, LV_OBJ_FLAG_HIDDEN);
+        ;
+        char msg[256] = {0};
+        snprintf(msg, sizeof(msg),
+                "#000000 Software Ver: # "  "#888888 V%u.%u.%u#\n"
+                "#000000 ESP-IDF Ver: # "   "#888888 %s#\n"
+                "#000000 Board: # "         "#888888 %s#",
+                BOX_DEMO_VERSION_MAJOR, BOX_DEMO_VERSION_MINOR, BOX_DEMO_VERSION_PATCH,
+                esp_get_idf_version(),
+                data->ID);
+
+        lv_obj_t *lab = lv_label_create(g_page);
+        lv_label_set_recolor(lab, true);
+        lv_label_set_text(lab, msg);
+        lv_obj_align(lab, LV_ALIGN_CENTER, 0, 0);
+
+        // lv_label_set_text(g_hint_lab, "System is loading ...");
+        // lv_obj_align(g_hint_lab, LV_ALIGN_CENTER, 0, 0);
         break;
     case UI_NET_EVT_START:
         /* code */
@@ -132,35 +154,36 @@ void ui_net_config_update_cb(ui_net_state_t state, void *args)
     case UI_NET_EVT_START_PROV:
         /* code */
         break;
-    case UI_NET_EVT_GET_NAME: {
-        LV_IMG_DECLARE(esp_logo_tiny);
-        const char *prov_msg = app_wifi_get_prov_payload();
-        size_t prov_msg_len = strlen(prov_msg);
-        g_qr = lv_qrcode_create(g_page, 108, lv_color_black(), lv_color_white());
-        ESP_LOGI(TAG, "QR Data: %s", prov_msg);
-        char *p = strstr(prov_msg, "\"name\":\"");
-        if (p) {
-            p += 8;
-            char *p_end = strstr(p, "\"");
-            if (p_end) {
-                char name[32] = {0};
-                strncpy(name, p, p_end - p);
-                lv_obj_t *lab_name = lv_label_create(g_page);
-                lv_label_set_text(lab_name, name);
-                lv_obj_align_to(lab_name, g_page, LV_ALIGN_TOP_MID, 0, -8);
-            }
-        }
-        lv_obj_align(g_qr, LV_ALIGN_TOP_MID, 0, 8);
-        lv_obj_t *img = lv_img_create(g_qr);
-        lv_img_set_src(img, &esp_logo_tiny);
-        lv_obj_center(img);
-        lv_qrcode_update(g_qr, prov_msg, prov_msg_len);
-        lv_obj_clear_flag(g_hint_lab, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(g_hint_lab,
-                          "1.Open ESP-BOX APP on your phone\n"
-                          "2.Scan the QR Code to provision");
-        lv_obj_align_to(g_hint_lab, g_qr, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-    }
+    case UI_NET_EVT_GET_NAME: 
+    // {
+    //     LV_IMG_DECLARE(esp_logo_tiny);
+    //     const char *prov_msg = app_wifi_get_prov_payload();
+    //     size_t prov_msg_len = strlen(prov_msg);
+    //     g_qr = lv_qrcode_create(g_page, 108, lv_color_black(), lv_color_white());
+    //     ESP_LOGI(TAG, "QR Data: %s", prov_msg);
+    //     char *p = strstr(prov_msg, "\"name\":\"");
+    //     if (p) {
+    //         p += 8;
+    //         char *p_end = strstr(p, "\"");
+    //         if (p_end) {
+    //             char name[32] = {0};
+    //             strncpy(name, p, p_end - p);
+    //             lv_obj_t *lab_name = lv_label_create(g_page);
+    //             lv_label_set_text(lab_name, name);
+    //             lv_obj_align_to(lab_name, g_page, LV_ALIGN_TOP_MID, 0, -8);
+    //         }
+    //     }
+    //     lv_obj_align(g_qr, LV_ALIGN_TOP_MID, 0, 8);
+    //     lv_obj_t *img = lv_img_create(g_qr);
+    //     lv_img_set_src(img, &esp_logo_tiny);
+    //     lv_obj_center(img);
+    //     lv_qrcode_update(g_qr, prov_msg, prov_msg_len);
+    //     lv_obj_clear_flag(g_hint_lab, LV_OBJ_FLAG_HIDDEN);
+    //     lv_label_set_text(g_hint_lab,
+    //                       "1.Open ESP-BOX APP on your phone\n"
+    //                       "2.Scan the QR Code to provision");
+    //     lv_obj_align_to(g_hint_lab, g_qr, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+    // }
     break;
     case UI_NET_EVT_START_CONNECT:
         lv_obj_clear_flag(g_hint_lab, LV_OBJ_FLAG_HIDDEN);
@@ -177,7 +200,7 @@ void ui_net_config_update_cb(ui_net_state_t state, void *args)
     break;
     case UI_NET_EVT_CLOUD_CONNECTED: {
         char ssid[64] = {0};
-        app_wifi_get_wifi_ssid(ssid, sizeof(ssid));
+        // app_wifi_get_wifi_ssid(ssid, sizeof(ssid));
         LV_IMG_DECLARE(icon_rmaker);
         g_img = lv_img_create(g_page);
         lv_img_set_src(g_img, &icon_rmaker);
@@ -253,5 +276,5 @@ void ui_net_config_start(void (*fn)(void))
     lv_label_set_recolor(g_hint_lab, true);
     lv_label_set_text_static(g_hint_lab, "...");
     lv_obj_align(g_hint_lab, LV_ALIGN_CENTER, 0, 0);
-    ui_net_config_update_cb(g_net_state, NULL);
+    ui_net_config_update_cb(g_net_state, NULL, NULL);
 }

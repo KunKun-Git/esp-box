@@ -6,13 +6,12 @@ idf_component_register(
         "gui"
         "gui/font"
         "gui/image"
-        "rmaker"
 
     INCLUDE_DIRS
         "."
         "gui"
         "app"
-        "rmaker")
+        )
 
 target_compile_definitions(${COMPONENT_TARGET} PRIVATE "-D RMAKER_DEMO_PROJECT_NAME=\"${CMAKE_PROJECT_NAME}\"")
 

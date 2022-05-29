@@ -23,8 +23,14 @@ typedef enum {
     UI_NET_EVT_CLOUD_CONNECTED,
 } ui_net_state_t;
 
+typedef struct {
+    char ID[128];
+    char Seq[128];
+    char lastDetectedTime[256];
+} ui_net_data_t;
+
 void ui_net_config_start(void (*fn)(void));
-void ui_net_config_update_cb(ui_net_state_t status, void *args);
+void ui_net_config_update_cb(ui_net_state_t state, ui_net_data_t *data, void *args);
 
 #ifdef __cplusplus
 }
