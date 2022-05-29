@@ -25,7 +25,7 @@
 #include "ui_device_ctrl.h"
 #include "ui_net_config.h"
 
-ui_net_data_t tobeShow = {"l4b:xxxx", "xxxx-xxxx", "2022.5.20"};
+ui_net_data_t tobeShow = {"l4b:xxxx", "xxxx-xxxx", "2022.5.20", false};
 
 static const char *TAG = "MQTTWS_BOX";
 esp_mqtt_client_handle_t clientGlobal;
@@ -66,8 +66,11 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
         msg_id = esp_mqtt_client_subscribe(client, "/topic/ID", 0);
         ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/Seq", 1);
+        msg_id = esp_mqtt_client_subscribe(client, "/topic/result", 0);
+        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+        msg_id = esp_mqtt_client_subscribe(client, "/topic/lasttime", 0);
+        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+        msg_id = esp_mqtt_client_subscribe(client, "/topic/seq", 0);
         ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
 
         break;
@@ -101,8 +104,34 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         {
             ESP_LOGI(TAG, "The topic is ID");
             strcpy(tobeShow.ID, datamsg);
-            ESP_LOGI(TAG, "%s", tobeShow.ID);
+            ESP_LOGI(TAG, "ID:%s", tobeShow.ID);
             ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
+        }
+        else if(strcmp(topicmsg, "/topic/lasttime") == 0)
+        {
+            ESP_LOGI(TAG, "The topic is lasttime");
+            strcpy(tobeShow.lastDetectedTime, datamsg);
+            ESP_LOGI(TAG, "Last detected time:%s", tobeShow.lastDetectedTime);
+            ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
+        }
+        else if(strcmp(topicmsg, "/topic/seq") == 0)
+        {
+            ESP_LOGI(TAG, "The topic is sequence number");
+            strcpy(tobeShow.Seq, datamsg);
+            ESP_LOGI(TAG, "Seq:%s", tobeShow.Seq);
+            ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
+        }
+        else if(strcmp(topicmsg, "/topic/result") == 0)
+        {
+            ESP_LOGI(TAG, "The topic is Result");
+            if (strcmp(datamsg, "Negetive") == 0)
+                tobeShow.result = false;
+            else
+                tobeShow.result = true;
+            ESP_LOGI(TAG, "Result:%s", datamsg);
+            ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
+            vTaskDelay(3000);
+            msg_id = esp_mqtt_client_publish(client, "/topic/finishedID", tobeShow.ID, 0, 1, 0);
         }
 
 

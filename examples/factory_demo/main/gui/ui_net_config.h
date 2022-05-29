@@ -27,6 +27,7 @@ typedef struct {
     char ID[32];
     char Seq[32];
     char lastDetectedTime[32];
+    bool result;
 } ui_net_data_t;
 
 void ui_net_config_start(void (*fn)(void));

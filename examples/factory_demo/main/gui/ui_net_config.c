@@ -21,7 +21,6 @@ static lv_obj_t *g_qr = NULL;
 static lv_obj_t *g_img = NULL;
 static lv_obj_t *g_page = NULL;
 static ui_net_state_t g_net_state = UI_NET_EVT_LOARDING;
-static ui_net_data_t *g_net_data = NULL;
 
 static void (*g_net_config_end_cb)(void) = NULL;
 
@@ -117,8 +116,7 @@ static void ui_net_config_page_return_click_cb(lv_event_t *e)
 void ui_net_config_update_cb(ui_net_state_t state, ui_net_data_t *data, void *args)
 {
     g_net_state = state;
-    g_net_data = data;
-    
+
     if (!g_page) {
         return;
     }
@@ -126,18 +124,32 @@ void ui_net_config_update_cb(ui_net_state_t state, ui_net_data_t *data, void *ar
         return;
     }
 
+    char msg[256] = {0};
     ui_acquire();
     switch (state) {
     case UI_NET_EVT_LOARDING:       
-        ;
-        char msg[256] = {0};
-        snprintf(msg, sizeof(msg),
+        if(!data->result)
+        {
+            snprintf(msg, sizeof(msg),
                 "#000000 Sequence Number:    # "         "#888888 %s#\n"
                 "#000000 ID card number:     # "         "#888888 %s#\n"
-                "#000000 Last Detected Time: # "         "#888888 %s#\n",
+                "#00aa00 Last Detected Time: # "         "#00dd00 %s#\n",
                 data->Seq,
                 data->ID,
                 data->lastDetectedTime);
+        }
+        else
+        {
+            snprintf(msg, sizeof(msg),
+                "#000000 Sequence Number:    # "         "#888888 %s#\n"
+                "#000000 ID card number:     # "         "#888888 %s#\n"
+                "#aa0000 Last Detected Time: # "         "#dd0000 %s#\n",
+                data->Seq,
+                data->ID,
+                data->lastDetectedTime);
+        }
+        
+
 
         // lv_obj_t *lab = lv_label_create(g_page);
         lv_label_set_recolor(g_hint_lab, true);
