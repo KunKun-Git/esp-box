@@ -190,9 +190,9 @@ static void rmaker_task(void *args)
 
     /* Start the Wi-Fi. */
     esp_err_t err = app_wifi_start();
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Could not start Wifi");
-    }
+    // if (err != ESP_OK) {
+    //     ESP_LOGE(TAG, "Could not start Wifi");
+    // }
 
     vTaskDelete(NULL);
 }

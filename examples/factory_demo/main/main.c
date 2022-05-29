@@ -9,7 +9,6 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_log.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "bsp_board.h"
@@ -23,6 +22,8 @@
 #include "app_sr.h"
 #include "app_player.h"
 #include "gui/ui_main.h"
+
+#include "espnow_example.h"
 
 static const char *TAG = "main";
 
@@ -80,6 +81,10 @@ void app_main(void)
     ESP_ERROR_CHECK(bsp_spiffs_init("model", "/srmodel", 4));
     ESP_ERROR_CHECK(bsp_spiffs_init("storage", "/spiffs", 2));
     ESP_ERROR_CHECK(ui_main_start());
+
+    // example_wifi_init();
+    // ESP_ERROR_CHECK(example_espnow_init());    
+    
     bsp_lcd_set_backlight(true);  // Turn on the backlight after gui initialize
     ESP_ERROR_CHECK(app_player_start("/spiffs/mp3"));
 
@@ -88,4 +93,5 @@ void app_main(void)
     ESP_LOGI(TAG, "speech recognition start");
     app_sr_start(false);
     app_rmaker_start();
+
 }

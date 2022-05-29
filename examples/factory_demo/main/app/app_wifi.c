@@ -10,6 +10,7 @@
 #include <freertos/event_groups.h>
 
 #include <esp_wifi.h>
+#include <espnow_example.h>
 #include <esp_event.h>
 #include <esp_log.h>
 #include "esp_bt.h"
@@ -197,6 +198,7 @@ void app_wifi_init(void)
     esp_netif_create_default_wifi_sta();
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
 }
 
 esp_err_t app_wifi_start(void)

@@ -25,6 +25,7 @@
 #include "ui_player.h"
 #include "ui_device_ctrl.h"
 #include "ui_about_us.h"
+#include "ui_nucleic_acid_testing.h"
 #include "ui_net_config.h"
 #include "ui_boot_animate.h"
 
@@ -199,9 +200,15 @@ static void dev_ctrl_end_cb(void)
     ui_main_menu(g_item_index);
 }
 
-static void about_us_end_cb(void)
+// static void about_us_end_cb(void)
+// {
+//     ESP_LOGI(TAG, "about_us end");
+//     ui_main_menu(g_item_index);
+// }
+
+static void nucleic_acid_testing_end_cb(void)
 {
-    ESP_LOGI(TAG, "about_us end");
+    ESP_LOGI(TAG, "nucleic_acid_testing end");
     ui_main_menu(g_item_index);
 }
 
@@ -232,7 +239,8 @@ static item_desc_t item[] = {
     { .name = "Network",        .img_src = (void *) &icon_network},
     { .name = "Media Player",   .img_src = (void *) &icon_media_player},
     { .name = "Help",           .img_src = (void *) &icon_help},
-    { .name = "About Us",       .img_src = (void *) &icon_about_us},
+    // { .name = "About Us",       .img_src = (void *) &icon_about_us},
+    { .name = "Nucleic Acid Test",  .img_src = (void *) &icon_about_us},
 };
 
 static lv_obj_t *g_img_item = NULL;
@@ -301,10 +309,14 @@ static void menu_enter_cb(lv_event_t *e)
         ui_status_bar_set_visible(false);
         ui_help();
         break;
+    // case 4:
+    //     ui_status_bar_set_visible(true);
+    //     ui_about_us_start(about_us_end_cb);
+    //     break;
     case 4:
         ui_status_bar_set_visible(true);
-        ui_about_us_start(about_us_end_cb);
-        break;
+        ui_nucleic_acid_testing_start(nucleic_acid_testing_end_cb);
+        break;    
     default:
         break;
     }
