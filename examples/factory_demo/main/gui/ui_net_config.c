@@ -128,22 +128,22 @@ void ui_net_config_update_cb(ui_net_state_t state, ui_net_data_t *data, void *ar
 
     ui_acquire();
     switch (state) {
-    case UI_NET_EVT_LOARDING:
-        // lv_obj_clear_flag(g_hint_lab, LV_OBJ_FLAG_HIDDEN);
+    case UI_NET_EVT_LOARDING:       
         ;
         char msg[256] = {0};
         snprintf(msg, sizeof(msg),
-                "#000000 Software Ver: # "  "#888888 V%u.%u.%u#\n"
-                "#000000 ESP-IDF Ver: # "   "#888888 %s#\n"
-                "#000000 Board: # "         "#888888 %s#",
-                BOX_DEMO_VERSION_MAJOR, BOX_DEMO_VERSION_MINOR, BOX_DEMO_VERSION_PATCH,
-                esp_get_idf_version(),
-                data->ID);
+                "#000000 Sequence Number:    # "         "#888888 %s#\n"
+                "#000000 ID card number:     # "         "#888888 %s#\n"
+                "#000000 Last Detected Time: # "         "#888888 %s#\n",
+                data->Seq,
+                data->ID,
+                data->lastDetectedTime);
 
-        lv_obj_t *lab = lv_label_create(g_page);
-        lv_label_set_recolor(lab, true);
-        lv_label_set_text(lab, msg);
-        lv_obj_align(lab, LV_ALIGN_CENTER, 0, 0);
+        // lv_obj_t *lab = lv_label_create(g_page);
+        lv_label_set_recolor(g_hint_lab, true);
+        lv_obj_clear_flag(g_hint_lab, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(g_hint_lab, msg);
+        lv_obj_align(g_hint_lab, LV_ALIGN_CENTER, 0, 0);
 
         // lv_label_set_text(g_hint_lab, "System is loading ...");
         // lv_obj_align(g_hint_lab, LV_ALIGN_CENTER, 0, 0);
@@ -274,7 +274,7 @@ void ui_net_config_start(void (*fn)(void))
 
     g_hint_lab = lv_label_create(g_page);
     lv_label_set_recolor(g_hint_lab, true);
-    lv_label_set_text_static(g_hint_lab, "...");
+    lv_label_set_text(g_hint_lab, "loading...");
     lv_obj_align(g_hint_lab, LV_ALIGN_CENTER, 0, 0);
     ui_net_config_update_cb(g_net_state, NULL, NULL);
 }

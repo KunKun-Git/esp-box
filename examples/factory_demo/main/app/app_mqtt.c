@@ -7,7 +7,7 @@
 #include "nvs_flash.h"
 #include "esp_event.h"
 #include "esp_netif.h"
-#include "protocol_examples_common.h"
+// #include "protocol_examples_common.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -25,10 +25,12 @@
 #include "ui_device_ctrl.h"
 #include "ui_net_config.h"
 
-ui_net_data_t tobeShow;
+ui_net_data_t tobeShow = {"l4b:xxxx", "xxxx-xxxx", "2022.5.20"};
 
 static const char *TAG = "MQTTWS_BOX";
 esp_mqtt_client_handle_t clientGlobal;
+
+bool app_mqtt_is_connected = 0;
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -59,6 +61,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+        app_mqtt_is_connected = 1;
         msg_id = esp_mqtt_client_publish(client, "/topic/connected", "box connected", 0, 1, 0);
         ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
         msg_id = esp_mqtt_client_subscribe(client, "/topic/ID", 0);

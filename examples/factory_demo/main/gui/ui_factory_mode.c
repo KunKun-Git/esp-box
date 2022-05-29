@@ -14,7 +14,7 @@
 static const char *TAG = "ui_factory";
 
 static void (*g_factory_end_cb)(void) = NULL;
-static uint32_t g_active_index = 0;
+static uint32_t g_active_index = 2;
 typedef struct {
     sr_language_t sr_lang;
     const char *text;

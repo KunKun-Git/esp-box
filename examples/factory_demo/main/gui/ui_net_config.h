@@ -24,9 +24,9 @@ typedef enum {
 } ui_net_state_t;
 
 typedef struct {
-    char ID[128];
-    char Seq[128];
-    char lastDetectedTime[256];
+    char ID[32];
+    char Seq[32];
+    char lastDetectedTime[32];
 } ui_net_data_t;
 
 void ui_net_config_start(void (*fn)(void));

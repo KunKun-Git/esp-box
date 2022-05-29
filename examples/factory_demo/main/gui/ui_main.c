@@ -16,7 +16,7 @@
 #include "lv_symbol_extra_def.h"
 #include "bsp_btn.h"
 // #include "app_wifi.h"
-// #include "app_rmaker.h"
+#include "app_mqtt.h"
 #include "settings.h"
 #include "ui_main.h"
 #include "ui_sr.h"
@@ -156,7 +156,7 @@ static void ui_status_bar_set_visible(bool visible)
     if (visible) {
         // update all state
         // ui_main_status_bar_set_wifi(app_wifi_is_connected());
-        // ui_main_status_bar_set_cloud(app_rmaker_is_connected());
+        ui_main_status_bar_set_cloud(app_mqtt_is_connected);
         lv_obj_clear_flag(g_status_bar, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_flag(g_status_bar, LV_OBJ_FLAG_HIDDEN);
@@ -236,11 +236,11 @@ LV_IMG_DECLARE(icon_network)
 
 static item_desc_t item[] = {
     { .name = "Device Control", .img_src = (void *) &icon_dev_ctrl},
-    { .name = "Network",        .img_src = (void *) &icon_network},
+    { .name = "Nucleic Acid Test",        .img_src = (void *) &icon_network},
     { .name = "Media Player",   .img_src = (void *) &icon_media_player},
     { .name = "Help",           .img_src = (void *) &icon_help},
-    // { .name = "About Us",       .img_src = (void *) &icon_about_us},
-    { .name = "Nucleic Acid Test",  .img_src = (void *) &icon_about_us},
+    { .name = "About Us",       .img_src = (void *) &icon_about_us},
+    // { .name = "Nucleic Acid Test",  .img_src = (void *) &icon_about_us},
 };
 
 static lv_obj_t *g_img_item = NULL;
@@ -485,12 +485,12 @@ esp_err_t ui_main_start(void)
     lv_timer_t *timer = lv_timer_create(clock_run_cb, 1000, (void *) lab_time);
     clock_run_cb(timer);
 
-    g_lab_wifi = lv_label_create(g_status_bar);
-    lv_obj_align_to(g_lab_wifi, lab_time, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
+    // g_lab_wifi = lv_label_create(g_status_bar);
+    // lv_obj_align_to(g_lab_wifi, lab_time, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
 
     g_lab_cloud = lv_label_create(g_status_bar);
     lv_obj_set_style_text_font(g_lab_cloud, &font_icon_16, LV_PART_MAIN);
-    lv_obj_align_to(g_lab_cloud, g_lab_wifi, LV_ALIGN_OUT_RIGHT_MID, 5, 0);
+    lv_obj_align_to(g_lab_cloud, lab_time, LV_ALIGN_OUT_RIGHT_MID, 5, 0);
 
     ui_status_bar_set_visible(0);
 

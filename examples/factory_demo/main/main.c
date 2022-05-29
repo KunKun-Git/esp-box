@@ -25,7 +25,7 @@
 #include "app_mqtt.h"
 #include "gui/ui_main.h"
 
-#include "protocol_examples_common.h"
+// #include "protocol_examples_common.h"
 #include <esp_event.h>
 #include <esp_wifi.h>
 #include <esp_netif.h>

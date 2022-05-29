@@ -110,15 +110,14 @@ void ui_nucleic_acid_testing_start(void (*fn)(void))
 
     char msg[256] = {0};
     snprintf(msg, sizeof(msg),
-             "#000000 Nucleic Acid Test # "  "#888888 \n"
-             "#000000 name: # "   "#888888 QKQ#\n"
-             "#000000 ID: # "            "#888888 l4b0027#\n"
-             "#000000 Date: # "         "#888888 2020.5.28#");
+             "#000000 Nucleic Acid Test System# "  "#888888 \n"
+             "#000000 Team Name: # "    "#888888 QKQ#\n"
+             "#000000 Member: # "       "#888888 Xiaokun Teng# Yanqing Ren#");
 
     lv_obj_t *lab = lv_label_create(page);
     lv_label_set_recolor(lab, true);
     lv_label_set_text(lab, msg);
-    lv_obj_align(lab, LV_ALIGN_BOTTOM_LEFT, 0, -10);
+    lv_obj_align(lab, LV_ALIGN_BOTTOM_LEFT, 0, -5);
 
     bsp_btn_register_callback(BOARD_BTN_ID_BOOT, BUTTON_SINGLE_CLICK, btn_factory_cb, page);
 }
