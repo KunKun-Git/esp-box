@@ -47,9 +47,9 @@ typedef enum {
     SR_CMD_LIGHT_ON,
     SR_CMD_LIGHT_OFF,
     SR_CMD_CUSTOMIZE_COLOR,
-    SR_CMD_NEXT,
-    SR_CMD_PLAY,
-    SR_CMD_PAUSE,
+    SR_CMD_SINGLE,
+    SR_CMD_FINISH,
+    SR_CMD_HYBRID,
     SR_CMD_MAX,
 } sr_user_cmd_t;
 

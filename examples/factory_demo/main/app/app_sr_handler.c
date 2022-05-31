@@ -19,7 +19,8 @@
 #include "ui_sr.h"
 #include "app_sr_handler.h"
 #include "settings.h"
-
+#include "app_mqtt.h"
+#include "mqtt_client.h"
 
 static const char *TAG = "sr_handler";
 
@@ -96,6 +97,7 @@ bool sr_echo_is_playing(void)
 
 void sr_handler_task(void *pvParam)
 {
+    int msg_id;
     esp_err_t ret;
     FILE *fp;
     const sys_param_t *param = settings_get_parameter();
@@ -188,16 +190,22 @@ void sr_handler_task(void *pvParam)
                 app_pwm_led_get_customize_color(&h, &s, &v);
                 app_pwm_led_set_all_hsv(h, s, v);
             } break;
-            case SR_CMD_NEXT:
-                app_player_play_next();
-                break;
-            case SR_CMD_PLAY:
-                app_player_play();
+            case SR_CMD_FINISH:
+                msg_id = esp_mqtt_client_publish(clientGlobal, "/topic/finishedID", tobeShow.ID, 0, 1, 0);
+                ESP_LOGI(TAG, "Success Publish!");
                 last_player_state = PLAYER_STATE_PLAYING;
+                app_player_play();
                 break;
-            case SR_CMD_PAUSE:
-                app_player_pause();
-                last_player_state = PLAYER_STATE_PAUSE;
+            case SR_CMD_SINGLE:
+                // app_player_pause();
+                // last_player_state = PLAYER_STATE_PAUSE;
+                msg_id = esp_mqtt_client_publish(clientGlobal, "/topic/way", "single", 0, 1, 0);
+                ESP_LOGI(TAG, "Success Publish!");
+                break;
+            case SR_CMD_HYBRID:
+                // app_player_play_next();
+                msg_id = esp_mqtt_client_publish(clientGlobal, "/topic/way", "hybrid", 0, 1, 0);
+                ESP_LOGI(TAG, "Success Publish!");
                 break;
             default:
                 ESP_LOGE(TAG, "Unknow cmd");

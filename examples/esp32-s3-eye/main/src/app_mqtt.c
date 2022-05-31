@@ -1,3 +1,11 @@
+/* MQTT over Websockets Example
+
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -7,7 +15,7 @@
 #include "nvs_flash.h"
 #include "esp_event.h"
 #include "esp_netif.h"
-// #include "protocol_examples_common.h"
+#include "protocol_examples_common.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -19,18 +27,11 @@
 #include "lwip/netdb.h"
 
 #include "esp_log.h"
-#include "mqtt_client.h"
+
 #include "app_mqtt.h"
-#include "ui_main.h"
-#include "ui_device_ctrl.h"
 
-
-ui_net_data_t tobeShow = {"l4b:xxxx", "xxxx-xxxx", "2022.5.20", false};
-
-static const char *TAG = "MQTTWS_BOX";
+static const char *TAG = "MQTTWS_EYE";
 esp_mqtt_client_handle_t clientGlobal;
-
-bool app_mqtt_is_connected = 0;
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -51,9 +52,6 @@ static void log_error_if_nonzero(const char *message, int error_code)
  */
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    char topicmsg[256] = {0};
-    char datamsg[256] = {0};
-
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
     esp_mqtt_event_handle_t event = event_data;
     esp_mqtt_client_handle_t client = event->client;
@@ -61,18 +59,19 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        app_mqtt_is_connected = 1;
-        msg_id = esp_mqtt_client_publish(client, "/topic/connected", "box connected", 0, 1, 0);
+        msg_id = esp_mqtt_client_publish(client, "/topic/connected", "eye connected", 0, 1, 0);
         ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+
         msg_id = esp_mqtt_client_subscribe(client, "/topic/ID", 0);
         ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/result", 0);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/lasttime", 0);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/seq", 0);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
 
+        msg_id = esp_mqtt_client_subscribe(client, "/topic/Seq", 1);
+        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+        // msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
+        // ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+        // msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
+        // ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -93,48 +92,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
-        
-
-        snprintf(topicmsg, sizeof(topicmsg), "%.*s", event->topic_len, event->topic);
-        snprintf(datamsg, sizeof(datamsg), "%.*s", event->data_len, event->data);
-        ESP_LOGI(TAG, "%s", topicmsg);
-        ESP_LOGI(TAG, "%s", datamsg);
-
-        if(strcmp(topicmsg, "/topic/ID") == 0)
-        {
-            ESP_LOGI(TAG, "The topic is ID");
-            strcpy(tobeShow.ID, datamsg);
-            ESP_LOGI(TAG, "ID:%s", tobeShow.ID);
-            ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
-        }
-        else if(strcmp(topicmsg, "/topic/lasttime") == 0)
-        {
-            ESP_LOGI(TAG, "The topic is lasttime");
-            strcpy(tobeShow.lastDetectedTime, datamsg);
-            ESP_LOGI(TAG, "Last detected time:%s", tobeShow.lastDetectedTime);
-            ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
-        }
-        else if(strcmp(topicmsg, "/topic/seq") == 0)
-        {
-            ESP_LOGI(TAG, "The topic is sequence number");
-            strcpy(tobeShow.Seq, datamsg);
-            ESP_LOGI(TAG, "Seq:%s", tobeShow.Seq);
-            ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
-        }
-        else if(strcmp(topicmsg, "/topic/result") == 0)
-        {
-            ESP_LOGI(TAG, "The topic is Result");
-            if (strcmp(datamsg, "Negetive") == 0)
-                tobeShow.result = false;
-            else
-                tobeShow.result = true;
-            ESP_LOGI(TAG, "Result:%s", datamsg);
-            ui_net_config_update_cb(UI_NET_EVT_LOARDING, &tobeShow, NULL);
-            vTaskDelay(3000);
-            msg_id = esp_mqtt_client_publish(client, "/topic/finishedID", tobeShow.ID, 0, 1, 0);
-        }
-
-
         break;
     case MQTT_EVENT_ERROR:
         ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
@@ -143,7 +100,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             log_error_if_nonzero("reported from tls stack", event->error_handle->esp_tls_stack_err);
             log_error_if_nonzero("captured as transport's socket errno",  event->error_handle->esp_transport_sock_errno);
             ESP_LOGI(TAG, "Last errno string (%s)", strerror(event->error_handle->esp_transport_sock_errno));
-
         }
         break;
     default:
@@ -154,13 +110,16 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_app_start(void)
 {
-    ESP_LOGI(TAG, "mqtt starting......");
+    ESP_LOGI(TAG, "__________mqtt starting!");
     const esp_mqtt_client_config_t mqtt_cfg = {
         .uri = "ws://123.56.251.102:8083/mqtt",
     };
-    ESP_LOGI(TAG, "MQTT start!");
+    
     clientGlobal = esp_mqtt_client_init(&mqtt_cfg);
+    ESP_LOGI(TAG, "__________mqtt init successed!");
     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
     esp_mqtt_client_register_event(clientGlobal, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(clientGlobal);
+    ESP_LOGI(TAG, "__________mqtt start successed!");
 }
+

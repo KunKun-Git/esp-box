@@ -1,8 +1,12 @@
-/*
- * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
+#include "driver/gpio.h"
+
+#include "app_button.hpp"
+#include "app_camera.hpp"
+#include "app_lcd.hpp"
+#include "app_led.hpp"
+#include "app_motion.hpp"
+// #include "app_speech.hpp"
+#include "app_face.hpp"
 
 #include <stdio.h>
 #include "esp_heap_caps.h"
@@ -16,16 +20,8 @@
 #include "bsp_lcd.h"
 #include "bsp_btn.h"
 #include "bsp_storage.h"
-#include "settings.h"
-#include "lv_port.h"
-#include "app_led.h"
-// #include "app_rmaker.h"
-#include "app_sr.h"
-#include "app_player.h"
 #include "app_mqtt.h"
-#include "gui/ui_main.h"
 
-// #include "protocol_examples_common.h"
 #include <esp_event.h>
 #include <esp_wifi.h>
 #include <esp_netif.h>
@@ -37,7 +33,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-static const char *TAG = "BOXmain";
+static const char *TAG = "EYEmain";
 
 #define EXAMPLE_ESP_WIFI_SSID      "QKQ"
 #define EXAMPLE_ESP_WIFI_PASS      "77776666"
@@ -54,41 +50,6 @@ static xSemaphoreHandle s_semph_get_ip_addrs;
 #define WIFI_FAIL_BIT      BIT1
 
 static int s_retry_num = 0;
-
-#define MEMORY_MONITOR 0
-
-#if MEMORY_MONITOR
-static void monitor_task(void *arg)
-{
-    (void) arg;
-    const int STATS_TICKS = pdMS_TO_TICKS(2 * 1000);
-
-    while (true) {
-        ESP_LOGI(TAG, "System Info Trace");
-        printf("\tDescription\tInternal\tSPIRAM\n");
-        printf("Current Free Memory\t%d\t\t%d\n",
-               heap_caps_get_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL),
-               heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-        printf("Largest Free Block\t%d\t\t%d\n",
-               heap_caps_get_largest_free_block(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL),
-               heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
-        printf("Min. Ever Free Size\t%d\t\t%d\n",
-               heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL),
-               heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM));
-
-        vTaskDelay(STATS_TICKS);
-    }
-
-    vTaskDelete(NULL);
-}
-
-static void sys_monitor_start(void)
-{
-    BaseType_t ret_val = xTaskCreatePinnedToCore(monitor_task, "Monitor Task", 4 * 1024, NULL, configMAX_PRIORITIES - 3, NULL, 0);
-    ESP_ERROR_CHECK_WITHOUT_ABORT((pdPASS == ret_val) ? ESP_OK : ESP_FAIL);
-}
-#endif
-
 
 
 /**
@@ -159,16 +120,27 @@ void wifi_init_sta(void)
                                                         NULL,
                                                         &instance_got_ip));
 
+    // wifi_config_t wifi_config = {
+    //     .sta = {
+    //         .ssid = EXAMPLE_ESP_WIFI_SSID,
+    //         .password = EXAMPLE_ESP_WIFI_PASS,
+    //         /* Setting a password implies station will connect to all security modes including WEP/WPA.
+    //          * However these modes are deprecated and not advisable to be used. Incase your Access point
+    //          * doesn't support WPA2, these mode can be enabled by commenting below line */
+	//      .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+    //     },
+    // };
     wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
+        {
+            EXAMPLE_ESP_WIFI_SSID,
+            EXAMPLE_ESP_WIFI_PASS,
             /* Setting a password implies station will connect to all security modes including WEP/WPA.
              * However these modes are deprecated and not advisable to be used. Incase your Access point
              * doesn't support WPA2, these mode can be enabled by commenting below line */
-	     .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+	        WIFI_AUTH_WPA2_PSK,
         },
     };
+
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
@@ -203,38 +175,41 @@ void wifi_init_sta(void)
 }
 
 
-void app_main(void)
+
+extern "C" void app_main()
 {
-    ESP_LOGI(TAG, "Compile time: %s %s", __DATE__, __TIME__);
-    /* Initialize NVS. */
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(err);
-    ESP_ERROR_CHECK(settings_read_parameter_from_nvs());
-#if !SR_RUN_TEST && MEMORY_MONITOR
-    sys_monitor_start(); // Logs should be reduced during SR testing
-#endif
-    ESP_ERROR_CHECK(bsp_board_init());
-    ESP_ERROR_CHECK(bsp_board_power_ctrl(POWER_MODULE_AUDIO, true));
-    ESP_ERROR_CHECK(lv_port_init());
-    ESP_ERROR_CHECK(bsp_spiffs_init("model", "/srmodel", 4));
-    ESP_ERROR_CHECK(bsp_spiffs_init("storage", "/spiffs", 2));
-    ESP_ERROR_CHECK(ui_main_start());
-    bsp_lcd_set_backlight(true);  // Turn on the backlight after gui initialize
-    ESP_ERROR_CHECK(app_player_start("/spiffs/mp3"));
-
-    const board_res_desc_t *brd = bsp_board_get_description();
-    app_pwm_led_init(brd->PMOD2->row1[1], brd->PMOD2->row1[2], brd->PMOD2->row1[3]);
-    ESP_LOGI(TAG, "speech recognition start");
-
-    app_sr_start(false);
-    // app_rmaker_start();
-    app_sr_set_language(SR_LANG_CN);
+    init_nvs();
     wifi_init_sta();
     mqtt_app_start();
 
-    
+    vTaskDelay(500);
+
+    QueueHandle_t xQueueFrame_0 = xQueueCreate(2, sizeof(camera_fb_t *));
+    QueueHandle_t xQueueFrame_1 = xQueueCreate(2, sizeof(camera_fb_t *));
+    QueueHandle_t xQueueFrame_2 = xQueueCreate(2, sizeof(camera_fb_t *));
+
+    AppButton *key = new AppButton();
+    // AppSpeech *speech = new AppSpeech();
+    AppCamera *camera = new AppCamera(PIXFORMAT_RGB565, FRAMESIZE_240X240, 2, xQueueFrame_0);
+    AppFace *face = new AppFace(key, nullptr, xQueueFrame_0, xQueueFrame_1);
+    AppMotion *motion = new AppMotion(key, nullptr, xQueueFrame_1, xQueueFrame_2);
+    AppLCD *lcd = new AppLCD(key, nullptr, xQueueFrame_2);
+    AppLED *led = new AppLED(GPIO_NUM_3, key, nullptr);
+
+    key->attach(face);
+    key->attach(motion);
+    key->attach(led);
+    key->attach(lcd);
+
+    // speech->attach(face);
+    // speech->attach(motion);
+    // speech->attach(led);
+    // speech->attach(lcd);
+
+    lcd->run();
+    motion->run();
+    face->run();
+    camera->run();
+    // speech->run();
+    key->run();
 }
