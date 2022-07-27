@@ -219,6 +219,10 @@ void app_main(void)
 #endif
     ESP_ERROR_CHECK(bsp_board_init());
     ESP_ERROR_CHECK(bsp_board_power_ctrl(POWER_MODULE_AUDIO, true));
+
+    wifi_init_sta();
+    mqtt_app_start();
+
     ESP_ERROR_CHECK(lv_port_init());
     ESP_ERROR_CHECK(bsp_spiffs_init("model", "/srmodel", 4));
     ESP_ERROR_CHECK(bsp_spiffs_init("storage", "/spiffs", 2));
@@ -233,8 +237,5 @@ void app_main(void)
     app_sr_start(false);
     // app_rmaker_start();
     app_sr_set_language(SR_LANG_CN);
-    wifi_init_sta();
-    mqtt_app_start();
-
     
 }
